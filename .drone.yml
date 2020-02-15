@@ -1,0 +1,39 @@
+---
+kind: pipeline
+name: integration tests
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: step just to give an example project - remove at will
+  image: docker:git
+  commands:
+  - git clone https://github.com/Ilhicas/quarkus-testcontainers.git
+
+- name: tests
+  image: maven:3.6.3-jdk-11-openj9
+  commands:
+  - cp application.properties quarkus-testcontainers/src/main/resources/application.properties
+  - cd quarkus-testcontainers
+  - mvn clean test  
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+
+- name: cleanup - This is just to ensure we clean first step that git clones example
+  image: alpine:3.9
+  commands:
+  - rm -r quarkus-testcontainers
+  when:
+    status:
+    - failure
+    - success
+
+volumes:
+- name: docker
+  host:
+    path: /var/run/docker.sock
+
+...
